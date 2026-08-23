@@ -369,6 +369,18 @@ export const SettingsGeneralV2: Component<{
           </div>
         </SettingsRowV2>
 
+        <SettingsRowV2
+          title={language.t("settings.general.row.sendWithCmdEnter.title")}
+          description={language.t("settings.general.row.sendWithCmdEnter.description")}
+        >
+          <div data-action="settings-send-with-cmd-enter">
+            <Switch
+              checked={settings.general.sendWithCmdEnter()}
+              onChange={(checked) => settings.general.setSendWithCmdEnter(checked)}
+            />
+          </div>
+        </SettingsRowV2>
+
         <Show when={mobile() && import.meta.env.VITE_OPENCODE_CHANNEL !== "prod"}>
           <SettingsRowV2
             title={language.t("settings.general.row.mobileTitlebarBottom.title")}

@@ -44,6 +44,7 @@ export type PromptInputV2Props = {
   variantControlVisible?: boolean
   attachKeybind?: string[]
   attachShortcut?: string
+  sendWithCmdEnter?: boolean
 }
 
 export function PromptInputV2(props: PromptInputV2Props) {
@@ -171,6 +172,21 @@ export function PromptInputV2(props: PromptInputV2Props) {
             }}
             onKeyDown={(event) => {
               if (props.controller.onKeyDown(event)) return
+              const requireCmd = props.sendWithCmdEnter && state.mode === "normal"
+              if (requireCmd) {
+                // Cmd/Ctrl+Enter to send, plain Enter inserts newline (only in normal mode)
+                if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.isComposing) {
+                  event.preventDefault()
+                  if (event.repeat) return
+                  props.controller.submit()
+                  return
+                }
+                if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.isComposing) {
+                  // Let browser insert newline naturally; prevent submit.
+                  return
+                }
+                return
+              }
               if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
                 event.preventDefault()
                 if (event.repeat) return
@@ -262,6 +278,7 @@ export function PromptInputV2(props: PromptInputV2Props) {
             stopLabel={i18n.t("ui.promptInput.stop")}
             onSubmit={props.controller.submit}
             onStop={props.controller.stop}
+            sendWithCmdEnter={props.sendWithCmdEnter}
           />
         </div>
       </form>
@@ -677,6 +694,7 @@ export function PromptInputV2SubmitButton(props: {
   stopLabel: string
   onSubmit: () => void
   onStop: () => void
+  sendWithCmdEnter?: boolean
 }) {
   return (
     <TooltipV2
@@ -689,7 +707,15 @@ export function PromptInputV2SubmitButton(props: {
         type="button"
         disabled={!props.stopping && props.disabled}
         tabIndex={props.mode === "normal" ? undefined : -1}
-        icon={props.stopping ? "stop" : props.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
+        icon={
+          props.stopping
+            ? "stop"
+            : props.mode === "shell"
+              ? "arrow-undo-down"
+              : props.sendWithCmdEnter
+                ? "enter"
+                : "arrow-up"
+        }
         variant="primary"
         class="size-7 rounded-md p-[6px] text-v2-icon-icon-muted shadow-[var(--v2-elevation-button-contrast)] disabled:opacity-50"
         style={{

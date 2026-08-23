@@ -56,6 +56,9 @@ export const Prompt = Schema.Struct({
   max_width: Schema.optional(Schema.Union([PromptSize, Schema.Literal("auto")])).annotate({
     description: "Home prompt max width: a positive integer for a fixed cap, or 'auto' to scale with terminal width",
   }),
+  send_with_cmd_enter: Schema.optional(Schema.Boolean).annotate({
+    description: "When true, ⌘+Enter (or Ctrl+Enter) sends the prompt and Enter inserts a new line",
+  }),
 }).annotate({ description: "Prompt size settings" })
 
 export const Info = Schema.Struct({
@@ -100,6 +103,10 @@ export type ResolveOptions = Schema.Schema.Type<typeof ResolveOptions>
 
 export function resolve(input: Info, options: ResolveOptions): Resolved {
   const keybinds: TuiKeybind.KeybindOverrides = { ...input.keybinds }
+  if (input.prompt?.send_with_cmd_enter) {
+    if (keybinds.input_submit === undefined) keybinds.input_submit = "super+return,ctrl+return"
+    if (keybinds.input_newline === undefined) keybinds.input_newline = "return,shift+return"
+  }
   if (!options.terminalSuspend) {
     keybinds.terminal_suspend = "none"
     if (keybinds.input_undo === undefined) {

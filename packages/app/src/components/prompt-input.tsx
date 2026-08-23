@@ -50,6 +50,7 @@ import { useCommand } from "@/context/command"
 import { usePermission } from "@/context/permission"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
+import { useSettings } from "@/context/settings"
 import { createSessionTabs } from "@/pages/session/helpers"
 import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./prompt-input/editor-dom"
 import { createPromptAttachments } from "./prompt-input/attachments"
@@ -127,6 +128,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const permission = usePermission()
   const language = useLanguage()
   const platform = usePlatform()
+  const settings = useSettings()
   const tabs = () => props.controls.session.tabs
   let editorRef!: HTMLDivElement
   let fileInputRef: HTMLInputElement | undefined
@@ -290,6 +292,16 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         <div class="flex items-center gap-2">
           <span>{language.t("prompt.action.stop")}</span>
           <span class="text-icon-base text-12-medium text-[10px]!">{language.t("common.key.esc")}</span>
+        </div>
+      )
+    }
+
+    const requireCmd = settings.general.sendWithCmdEnter()
+    if (requireCmd) {
+      return (
+        <div class="flex items-center gap-2">
+          <span>{language.t("prompt.action.send")}</span>
+          <span class="text-icon-base text-12-medium text-[10px]!">⌘+↵</span>
         </div>
       )
     }
@@ -1304,16 +1316,23 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       }
     }
 
-    // Handle Shift+Enter BEFORE IME check - Shift+Enter is never used for IME input
-    // and should always insert a newline regardless of composition state
-    if (event.key === "Enter" && event.shiftKey) {
-      addPart({ type: "text", content: "\n", start: 0, end: 0 })
-      event.preventDefault()
-      return
-    }
+    const requireCmdEnter = settings.general.sendWithCmdEnter() && store.mode === "normal"
+    if (!requireCmdEnter) {
+      // Handle Shift+Enter BEFORE IME check - Shift+Enter is never used for IME input
+      // and should always insert a newline regardless of composition state
+      if (event.key === "Enter" && event.shiftKey) {
+        addPart({ type: "text", content: "\n", start: 0, end: 0 })
+        event.preventDefault()
+        return
+      }
 
-    if (event.key === "Enter" && isImeComposing(event)) {
-      return
+      if (event.key === "Enter" && isImeComposing(event)) {
+        return
+      }
+    } else {
+      if (event.key === "Enter" && isImeComposing(event)) {
+        return
+      }
     }
 
     const ctrl = event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
@@ -1374,23 +1393,51 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       return
     }
 
-    // Note: Shift+Enter is handled earlier, before IME check
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault()
-      if (event.repeat) return
-      if (
-        working() &&
-        prompt
-          .current()
-          .map((part) => ("content" in part ? part.content : ""))
-          .join("")
-          .trim().length === 0 &&
-        imageAttachments().length === 0 &&
-        commentCount() === 0
-      ) {
+    // Note: Shift+Enter is handled earlier, before IME check (in non-cmd mode)
+    if (requireCmdEnter) {
+      const isModEnter = event.key === "Enter" && (event.metaKey || event.ctrlKey)
+      const isPlainEnter = event.key === "Enter" && !event.metaKey && !event.ctrlKey
+      if (isPlainEnter) {
+        event.preventDefault()
+        if (event.repeat) return
+        addPart({ type: "text", content: "\n", start: 0, end: 0 })
         return
       }
-      void handleSubmit(event)
+      if (isModEnter) {
+        event.preventDefault()
+        if (event.repeat) return
+        if (
+          working() &&
+          prompt
+            .current()
+            .map((part) => ("content" in part ? part.content : ""))
+            .join("")
+            .trim().length === 0 &&
+          imageAttachments().length === 0 &&
+          commentCount() === 0
+        ) {
+          return
+        }
+        void handleSubmit(event)
+      }
+    } else {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault()
+        if (event.repeat) return
+        if (
+          working() &&
+          prompt
+            .current()
+            .map((part) => ("content" in part ? part.content : ""))
+            .join("")
+            .trim().length === 0 &&
+          imageAttachments().length === 0 &&
+          commentCount() === 0
+        ) {
+          return
+        }
+        void handleSubmit(event)
+      }
     }
   }
 
@@ -1581,7 +1628,15 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
                   type="submit"
                   disabled={!working() && blank()}
                   tabIndex={store.mode === "normal" ? undefined : -1}
-                  icon={stopping() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up"}
+                  icon={
+                    stopping()
+                      ? "stop"
+                      : store.mode === "shell"
+                        ? "arrow-undo-down"
+                        : settings.general.sendWithCmdEnter()
+                          ? "enter"
+                          : "arrow-up"
+                  }
                   variant="primary"
                   class="size-8"
                   aria-label={stopping() ? language.t("prompt.action.stop") : language.t("prompt.action.send")}

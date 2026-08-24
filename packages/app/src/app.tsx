@@ -305,6 +305,11 @@ function BodyDesignClass() {
     document.body.classList.toggle("font-[440]", enabled)
   })
 
+  createRenderEffect(() => {
+    if (typeof document === "undefined") return
+    document.body.toggleAttribute("data-always-show-message-footer", settings.general.alwaysShowMessageFooter())
+  })
+
   return null
 }
 

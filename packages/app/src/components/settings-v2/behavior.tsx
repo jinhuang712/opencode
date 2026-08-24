@@ -100,6 +100,18 @@ export const SettingsBehaviorV2: Component = () => {
             />
           </div>
         </SettingsRowV2>
+
+        <SettingsRowV2
+          title={language.t("settings.general.row.alwaysShowMessageFooter.title")}
+          description={language.t("settings.general.row.alwaysShowMessageFooter.description")}
+        >
+          <div data-action="settings-always-show-message-footer">
+            <Switch
+              checked={settings.general.alwaysShowMessageFooter()}
+              onChange={(checked) => settings.general.setAlwaysShowMessageFooter(checked)}
+            />
+          </div>
+        </SettingsRowV2>
       </SettingsListV2>
     </div>
   )

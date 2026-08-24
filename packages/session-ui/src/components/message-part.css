@@ -1580,3 +1580,9 @@ body:not([data-new-layout]) {
     color: var(--text-weak);
   }
 }
+
+body[data-always-show-message-footer] [data-slot="user-message-copy-wrapper"],
+body[data-always-show-message-footer] [data-slot="text-part-copy-wrapper"] {
+  opacity: 1;
+  pointer-events: auto;
+}

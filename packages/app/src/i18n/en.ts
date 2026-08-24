@@ -966,6 +966,9 @@ export const dict = {
   "settings.general.row.editToolPartsExpanded.title": "Expand edit tool parts",
   "settings.general.row.editToolPartsExpanded.description":
     "Show edit, write, and patch tool parts expanded by default in the timeline",
+  "settings.general.row.alwaysShowMessageFooter.title": "Always show message footer",
+  "settings.general.row.alwaysShowMessageFooter.description":
+    "Always show agent, model, and duration footer on messages instead of only on hover",
   "settings.general.row.newInterface.title": "New layout",
   "settings.general.row.newInterface.badge": "New",
   "settings.general.row.newInterface.description":

@@ -32,6 +32,7 @@ export interface Settings {
     showReasoningSummaries: boolean
     shellToolPartsExpanded: boolean
     editToolPartsExpanded: boolean
+    alwaysShowMessageFooter: boolean
     showCustomAgents: boolean
     mobileTitlebarPosition: "top" | "bottom"
     sendWithCmdEnter: boolean
@@ -194,6 +195,7 @@ const defaultSettings: Settings = {
     showReasoningSummaries: false,
     shellToolPartsExpanded: false,
     editToolPartsExpanded: false,
+    alwaysShowMessageFooter: true,
     showCustomAgents: false,
     mobileTitlebarPosition: "top",
     sendWithCmdEnter: false,
@@ -418,6 +420,13 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         ),
         setEditToolPartsExpanded(value: boolean) {
           setStore("general", "editToolPartsExpanded", value)
+        },
+        alwaysShowMessageFooter: withFallback(
+          () => store.general?.alwaysShowMessageFooter,
+          defaultSettings.general.alwaysShowMessageFooter,
+        ),
+        setAlwaysShowMessageFooter(value: boolean) {
+          setStore("general", "alwaysShowMessageFooter", value)
         },
         showCustomAgents,
         setShowCustomAgents(value: boolean) {

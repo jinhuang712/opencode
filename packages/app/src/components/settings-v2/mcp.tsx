@@ -1,22 +1,38 @@
-import { Component, For, Show, createMemo } from "solid-js"
+import { type Accessor, Component, For, Show, createMemo } from "solid-js"
 import { Switch } from "@opencode-ai/ui/v2/switch-v2"
 import { useLanguage } from "@/context/language"
-import { useMcpToggle } from "@/context/mcp"
-import { useSync } from "@/context/sync"
+import { useServerSync } from "@/context/server-sync"
 import { SettingsListV2 } from "./parts/list"
 import { SettingsRowV2 } from "./parts/row"
 import "./settings-v2.css"
 
-export const SettingsMcpV2: Component = () => {
+export const SettingsMcpV2: Component<{ directory: Accessor<string | undefined> }> = (props) => {
   const language = useLanguage()
-  const sync = useSync()
-  const toggle = useMcpToggle()
+  const serverSync = useServerSync()
+  const mcpData = createMemo(() => {
+    const dir = props.directory()
+    if (!dir) return {}
+    const child = serverSync().peek(dir)
+    return child?.[0].mcp ?? {}
+  })
 
-  const names = createMemo(() => Object.keys(sync().data.mcp ?? {}).sort((a, b) => a.localeCompare(b)))
-  const status = (name: string) => sync().data.mcp?.[name]?.status
+  const toggle = {
+    get isPending() {
+      return false
+    },
+    variables: undefined as string | undefined,
+    mutate: (name: string) => {
+      const dir = props.directory()
+      if (!dir) return
+      void serverSync().mcp.toggle(dir, name)
+    },
+  }
+
+  const names = createMemo(() => Object.keys(mcpData()).sort((a, b) => a.localeCompare(b)))
+  const status = (name: string) => mcpData()?.[name]?.status
   const error = (name: string) => {
-    const item = sync().data.mcp?.[name]
-    if (item?.status === "failed" || item?.status === "needs_client_registration") return item.error
+    const item = mcpData()?.[name]
+    if (item?.status === "failed" || item?.status === "needs_client_registration") return (item as { error?: string }).error
     return undefined
   }
 

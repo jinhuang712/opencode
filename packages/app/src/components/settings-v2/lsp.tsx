@@ -1,14 +1,19 @@
-import { Component, For, Show, createMemo } from "solid-js"
+import { type Accessor, Component, For, Show, createMemo } from "solid-js"
 import { useLanguage } from "@/context/language"
-import { useSync } from "@/context/sync"
+import { useServerSync } from "@/context/server-sync"
 import { SettingsListV2 } from "./parts/list"
 import { SettingsRowV2 } from "./parts/row"
 import "./settings-v2.css"
 
-export const SettingsLspV2: Component = () => {
+export const SettingsLspV2: Component<{ directory: Accessor<string | undefined> }> = (props) => {
   const language = useLanguage()
-  const sync = useSync()
-  const items = createMemo(() => sync().data.lsp ?? [])
+  const serverSync = useServerSync()
+  const items = createMemo(() => {
+    const dir = props.directory()
+    if (!dir) return []
+    const child = serverSync().peek(dir)
+    return child?.[0].lsp ?? []
+  })
 
   return (
     <>

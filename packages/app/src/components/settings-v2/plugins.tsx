@@ -1,16 +1,18 @@
-import { Component, For, Show, createMemo } from "solid-js"
+import { type Accessor, Component, For, Show, createMemo } from "solid-js"
 import { useLanguage } from "@/context/language"
-import { useSync } from "@/context/sync"
+import { useServerSync } from "@/context/server-sync"
 import { SettingsListV2 } from "./parts/list"
 import { SettingsRowV2 } from "./parts/row"
 import "./settings-v2.css"
 
-export const SettingsPluginsV2: Component = () => {
+export const SettingsPluginsV2: Component<{ directory: Accessor<string | undefined> }> = (props) => {
   const language = useLanguage()
-  const sync = useSync()
-  const plugins = createMemo(() =>
-    (sync().data.config.plugin ?? []).map((item) => (typeof item === "string" ? item : item[0])),
-  )
+  const serverSync = useServerSync()
+  const plugins = createMemo(() => {
+    const dir = props.directory()
+    const config = dir ? (serverSync().peek(dir)?.[0].config ?? serverSync().data.config) : serverSync().data.config
+    return (config.plugin ?? []).map((item) => (typeof item === "string" ? item : item[0]))
+  })
 
   return (
     <>

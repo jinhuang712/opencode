@@ -156,13 +156,13 @@ export const DialogSettings: Component<{
           <SettingsModelsV2 />
         </TabsV2.Content>
         <TabsV2.Content value="mcp" class="settings-v2-panel">
-          <SettingsMcpV2 />
+          <SettingsMcpV2 directory={directory} />
         </TabsV2.Content>
         <TabsV2.Content value="lsp" class="settings-v2-panel">
-          <SettingsLspV2 />
+          <SettingsLspV2 directory={directory} />
         </TabsV2.Content>
         <TabsV2.Content value="plugins" class="settings-v2-panel">
-          <SettingsPluginsV2 />
+          <SettingsPluginsV2 directory={directory} />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

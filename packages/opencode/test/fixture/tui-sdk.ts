@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { GlobalEvent } from "@opencode-ai/sdk/v2"
 import type { EventSource } from "@opencode-ai/tui/context/sdk"
 

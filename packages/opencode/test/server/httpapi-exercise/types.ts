@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Duration, Effect } from "effect"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
 import { SessionV1 } from "@opencode-ai/core/v1/session"

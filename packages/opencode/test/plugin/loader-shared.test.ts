@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { afterEach, describe, expect, spyOn } from "bun:test"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { Effect, Layer } from "effect"

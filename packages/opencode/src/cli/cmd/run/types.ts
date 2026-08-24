@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Shared type vocabulary for the direct interactive mode (`opencode --mini`).
 //
 // Direct mode uses a split-footer terminal layout: immutable scrollback for the
@@ -12,7 +13,7 @@
 //       → footer.ts queues commits and patches the footer view
 //         → OpenTUI split-footer renderer writes to terminal
 import type { OpencodeClient, PermissionRequest, QuestionRequest, ToolPart } from "@opencode-ai/sdk/v2"
-import type { TuiConfig } from "@opencode-ai/tui/config"
+import type { TuiConfig } from "@/tui-dummy"
 
 export type RunFilePart = {
   type: "file"

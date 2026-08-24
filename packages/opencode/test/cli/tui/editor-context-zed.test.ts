@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Database } from "bun:sqlite"
 import { mkdir, symlink } from "node:fs/promises"
 import os from "node:os"

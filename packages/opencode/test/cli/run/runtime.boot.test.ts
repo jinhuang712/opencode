@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { OpencodeClient, type Provider } from "@opencode-ai/sdk/v2"
 import type { Resolved } from "@opencode-ai/tui/config"

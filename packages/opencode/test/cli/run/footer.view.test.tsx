@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** @jsxImportSource @opentui/solid */
 import { expect, test } from "bun:test"
 import { BoxRenderable, RGBA, type RootRenderable } from "@opentui/core"

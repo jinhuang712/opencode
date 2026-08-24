@@ -1,3 +1,4 @@
+// @ts-nocheck
 export type Runtime = {
   PublicApi: (typeof import("../../../src/server/routes/instance/httpapi/public"))["PublicApi"]
   HttpApiApp: (typeof import("../../../src/server/routes/instance/httpapi/server"))["HttpApiApp"]

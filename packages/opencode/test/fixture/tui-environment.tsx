@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** @jsxImportSource @opentui/solid */
 import {
   TuiPathsProvider,

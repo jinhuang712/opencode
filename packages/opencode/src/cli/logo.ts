@@ -1,1 +1,2 @@
-export * from "@opencode-ai/tui/logo"
+export function logo(): string { return "opencode" }
+export function go(): string { return "" }

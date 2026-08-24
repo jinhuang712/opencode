@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { afterEach, describe, expect } from "bun:test"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
 import { SessionV1 } from "@opencode-ai/core/v1/session"

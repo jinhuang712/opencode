@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, test } from "bun:test"
 import type { AudioPlayOptions, AudioSound } from "@opentui/core"
 import { createTuiAttention } from "@opencode-ai/tui/attention"

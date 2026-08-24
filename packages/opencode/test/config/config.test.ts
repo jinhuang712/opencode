@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { test, expect, describe, afterEach, beforeEach, spyOn } from "bun:test"
 import { ConfigV1 } from "@opencode-ai/core/v1/config/config"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"

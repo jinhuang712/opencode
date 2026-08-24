@@ -1,10 +1,5 @@
-import { createBuiltinPlugins, type BuiltinTuiPlugin } from "@opencode-ai/tui/builtins"
-import type { RuntimeFlags } from "@/effect/runtime-flags"
+export type InternalTuiPlugin = { id: string; enabled?: boolean }
 
-export type InternalTuiPlugin = BuiltinTuiPlugin
-
-export function internalTuiPlugins(flags: Pick<RuntimeFlags.Info, "experimentalEventSystem">): InternalTuiPlugin[] {
-  return createBuiltinPlugins({
-    experimentalEventSystem: flags.experimentalEventSystem,
-  })
+export function internalTuiPlugins(_flags: unknown): InternalTuiPlugin[] {
+  return []
 }

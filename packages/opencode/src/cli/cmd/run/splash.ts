@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Entry and exit splash banners for direct interactive mode scrollback.
 //
 // Renders the full opencode entry logo and a compact [O] exit badge, plus

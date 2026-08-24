@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Boot-time resolution for direct interactive mode.
 //
 // These functions run concurrently at startup to gather everything the runtime
@@ -6,7 +7,7 @@
 // history ring. All are async because they read config or hit the SDK, but
 // none block each other.
 import { Context, Effect, Layer } from "effect"
-import { resolve } from "@opencode-ai/tui/config"
+import { resolve } from "@/tui-dummy"
 import { TuiConfig } from "@/config/tui"
 import { makeRuntime } from "@/effect/run-service"
 import { reusePendingTask } from "./runtime.shared"

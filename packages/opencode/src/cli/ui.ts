@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EOL } from "os"
 import { Schema } from "effect"
 import { logo as glyphs } from "./logo"

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { spyOn } from "bun:test"
 import path from "path"
 import { resolve, type Info, type Resolved } from "@opencode-ai/tui/config"

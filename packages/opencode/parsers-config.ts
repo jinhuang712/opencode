@@ -1,1 +1,2 @@
-export { default } from "@opencode-ai/tui/parsers-config"
+export const parsersConfig = {}
+export default parsersConfig

@@ -42,15 +42,22 @@ jobs:
             exit 0
           fi
           BASE=$(git merge-base HEAD upstream/dev)
-          if [ "$BASE" != "$CURRENT" ]; then
-            echo "::error::dev has diverged from upstream/dev — expected fast-forward (no private commits on dev)."
-            echo "BASE=$BASE CURRENT=$CURRENT UPSTREAM=$UPSTREAM"
-            echo "--- graph ---"
-            git log --oneline --graph --all -15 || true
-            echo "---"
-            echo "Fix: ensure dev stays a pure mirror. Private work belongs on main."
-            exit 1
+          if [ "$BASE" = "$CURRENT" ]; then
+            echo "Fast-forwarding dev $CURRENT -> $UPSTREAM"
+            git merge --ff-only "upstream/dev"
+            git push origin dev
+            exit 0
           fi
-          echo "Fast-forwarding dev $CURRENT -> $UPSTREAM"
-          git merge --ff-only "upstream/dev"
-          git push origin dev
+          if [ "$BASE" = "$UPSTREAM" ]; then
+            echo "dev is ahead of upstream by fork-specific commits (e.g. sync workflow). Merging upstream into dev."
+            git merge "upstream/dev" --no-edit
+            git push origin dev
+            exit 0
+          fi
+          echo "::error::dev has diverged from upstream/dev (both sides have commits)."
+          echo "BASE=$BASE CURRENT=$CURRENT UPSTREAM=$UPSTREAM"
+          echo "--- graph ---"
+          git log --oneline --graph --all -15 || true
+          echo "---"
+          echo "Fix: reset dev to upstream/dev and re-apply fork commits. Private work belongs on main."
+          exit 1

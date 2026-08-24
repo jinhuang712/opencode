@@ -1,0 +1,56 @@
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # daily 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'jinhuang712/opencode'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync dev from upstream
+        run: |
+          set -euo pipefail
+          git remote add upstream https://github.com/anomalyco/opencode.git 2>/dev/null || true
+          git fetch upstream dev --prune
+          git fetch origin dev --prune
+          git checkout dev
+          UPSTREAM=$(git rev-parse upstream/dev)
+          CURRENT=$(git rev-parse HEAD)
+          if [ "$CURRENT" = "$UPSTREAM" ]; then
+            echo "dev already up to date with upstream/dev ($UPSTREAM)"
+            exit 0
+          fi
+          BASE=$(git merge-base HEAD upstream/dev)
+          if [ "$BASE" != "$CURRENT" ]; then
+            echo "::error::dev has diverged from upstream/dev — expected fast-forward (no private commits on dev)."
+            echo "BASE=$BASE CURRENT=$CURRENT UPSTREAM=$UPSTREAM"
+            echo "--- graph ---"
+            git log --oneline --graph --all -15 || true
+            echo "---"
+            echo "Fix: ensure dev stays a pure mirror. Private work belongs on main."
+            exit 1
+          fi
+          echo "Fast-forwarding dev $CURRENT -> $UPSTREAM"
+          git merge --ff-only "upstream/dev"
+          git push origin dev

@@ -547,6 +547,7 @@ export const dict = {
   "toast.workspace.disabled.title": "Workspaces disabled",
   "toast.workspace.disabled.description": "Only the main worktree is shown in the sidebar",
 
+
   "toast.permissions.autoaccept.on.title": "Auto-accepting permissions",
   "toast.permissions.autoaccept.on.description": "Permission requests will be automatically approved",
   "toast.permissions.autoaccept.off.title": "Stopped auto-accepting permissions",
@@ -890,9 +891,17 @@ export const dict = {
   "app.name.desktop": "OpenCode Desktop",
 
   "settings.section.desktop": "Desktop",
-  "settings.section.server": "Server",
+  "settings.section.server": "Connections",
   "settings.tab.general": "General",
+  "settings.tab.appearance": "Appearance",
+  "settings.tab.behavior": "Behavior",
+  "settings.tab.permissions": "Permissions",
+  "settings.tab.notifications": "Notifications",
   "settings.tab.shortcuts": "Shortcuts",
+  "settings.tab.connections": "Connections",
+  "settings.tab.mcp": "MCP",
+  "settings.tab.lsp": "LSP",
+  "settings.tab.plugins": "Plugins",
   "settings.desktop.section.wsl": "WSL",
   "settings.desktop.wsl.title": "WSL integration",
   "settings.desktop.wsl.description": "Run the OpenCode server inside WSL on Windows.",
@@ -904,6 +913,9 @@ export const dict = {
   "settings.general.section.sounds": "Sound effects",
   "settings.general.section.feed": "Feed",
   "settings.general.section.display": "Display",
+  "settings.general.section.behavior.composer": "Composer",
+  "settings.general.section.behavior.timeline": "Timeline",
+  "settings.general.section.behavior.display": "Display",
 
   "settings.general.row.language.title": "Language",
   "settings.general.row.language.description": "Change the display language for OpenCode",
@@ -1126,6 +1138,7 @@ export const dict = {
   "session.delete.button": "Delete session",
 
   "workspace.new": "New workspace",
+  "workspace.tag.main": "Main",
   "workspace.type.local": "local",
   "workspace.type.sandbox": "sandbox",
   "workspace.create.failed.title": "Failed to create workspace",

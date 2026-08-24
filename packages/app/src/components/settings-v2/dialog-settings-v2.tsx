@@ -5,11 +5,18 @@ import { Icon } from "@opencode-ai/ui/icon"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
 import { SettingsGeneralV2 } from "./general"
+import { SettingsAppearanceV2 } from "./appearance"
+import { SettingsBehaviorV2 } from "./behavior"
+import { SettingsPermissionsV2 } from "./permissions"
+import { SettingsNotificationsV2 } from "./notifications"
 import { SettingsKeybinds } from "../settings-keybinds"
 import { SettingsProvidersV2 } from "./providers"
 import { SettingsModelsV2 } from "./models"
 import "./settings-v2.css"
 import { SettingsServersV2 } from "./servers"
+import { SettingsMcpV2 } from "./mcp"
+import { SettingsLspV2 } from "./lsp"
+import { SettingsPluginsV2 } from "./plugins"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
 import { useTabs } from "@/context/tabs"
@@ -54,12 +61,28 @@ export const DialogSettings: Component<{
           <div class="flex flex-col justify-between h-full w-full">
             <div class="flex flex-col gap-3 w-full">
               <div class="flex flex-col gap-3">
-                <div class="flex flex-col gap-1.5">
+                  <div class="flex flex-col gap-1.5">
                   <TabsV2.SectionTitle>{language.t("settings.section.desktop")}</TabsV2.SectionTitle>
                   <div class="flex flex-col gap-1.5 w-full">
                     <TabsV2.Trigger value="general">
                       <Icon name="sliders" />
                       {language.t("settings.tab.general")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="appearance">
+                      <Icon name="eye" />
+                      {language.t("settings.tab.appearance")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="behavior">
+                      <Icon name="checklist" />
+                      {language.t("settings.tab.behavior")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="permissions">
+                      <Icon name="shield" />
+                      {language.t("settings.tab.permissions")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="notifications">
+                      <Icon name="speech-bubble" />
+                      {language.t("settings.tab.notifications")}
                     </TabsV2.Trigger>
                     <TabsV2.Trigger value="shortcuts">
                       <Icon name="keyboard" />
@@ -73,7 +96,7 @@ export const DialogSettings: Component<{
                   <div class="flex flex-col gap-1.5 w-full">
                     <TabsV2.Trigger value="servers">
                       <Icon name="server" />
-                      {language.t("status.popover.tab.servers")}
+                      {language.t("settings.tab.connections")}
                     </TabsV2.Trigger>
                     <TabsV2.Trigger value="providers">
                       <Icon name="providers" />
@@ -82,6 +105,18 @@ export const DialogSettings: Component<{
                     <TabsV2.Trigger value="models">
                       <Icon name="models" />
                       {language.t("settings.models.title")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="mcp">
+                      <Icon name="mcp" />
+                      {language.t("settings.tab.mcp")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="lsp">
+                      <Icon name="code" />
+                      {language.t("settings.tab.lsp")}
+                    </TabsV2.Trigger>
+                    <TabsV2.Trigger value="plugins">
+                      <Icon name="branch" />
+                      {language.t("settings.tab.plugins")}
                     </TabsV2.Trigger>
                   </div>
                 </div>
@@ -96,6 +131,18 @@ export const DialogSettings: Component<{
         <TabsV2.Content value="general" class="settings-v2-panel">
           <SettingsGeneralV2 sessionID={props.sessionID} />
         </TabsV2.Content>
+        <TabsV2.Content value="appearance" class="settings-v2-panel">
+          <SettingsAppearanceV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="behavior" class="settings-v2-panel">
+          <SettingsBehaviorV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="permissions" class="settings-v2-panel">
+          <SettingsPermissionsV2 sessionID={props.sessionID} />
+        </TabsV2.Content>
+        <TabsV2.Content value="notifications" class="settings-v2-panel">
+          <SettingsNotificationsV2 />
+        </TabsV2.Content>
         <TabsV2.Content value="shortcuts" class="settings-v2-panel">
           <SettingsKeybinds v2 />
         </TabsV2.Content>
@@ -107,6 +154,15 @@ export const DialogSettings: Component<{
         </TabsV2.Content>
         <TabsV2.Content value="models" class="settings-v2-panel">
           <SettingsModelsV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="mcp" class="settings-v2-panel">
+          <SettingsMcpV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="lsp" class="settings-v2-panel">
+          <SettingsLspV2 />
+        </TabsV2.Content>
+        <TabsV2.Content value="plugins" class="settings-v2-panel">
+          <SettingsPluginsV2 />
         </TabsV2.Content>
       </TabsV2>
     </Dialog>

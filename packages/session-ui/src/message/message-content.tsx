@@ -472,12 +472,21 @@ export function SessionCompactionMessage(props: { message: SessionMessageCompact
   )
 }
 
+export interface TurnTokenUsage {
+  input: number
+  output: number
+  reasoning: number
+  cache: { read: number; write: number }
+}
+
 export function AssistantTextContent(props: {
   id: string
   text: string
   message: SessionMessageAssistant
   showCopy: boolean
   turnDurationMs?: number | null
+  turnTokens?: TurnTokenUsage
+  turnCacheRate?: number
 }) {
   const data = useData()
   const i18n = useI18n()
@@ -508,12 +517,37 @@ export function AssistantTextContent(props: {
       seconds: numfmt().format(total % 60),
     })
   })
+  const tokens = createMemo(() => {
+    const usage = props.turnTokens
+    if (!usage) return ""
+    const total = usage.input + usage.output + usage.reasoning + usage.cache.read + usage.cache.write
+    if (!(total > 0)) return ""
+    const compact = new Intl.NumberFormat(i18n.locale(), { notation: "compact" }).format(total)
+    return i18n.t("ui.message.tokens", { count: compact })
+  })
+  const cacheRate = createMemo(() => {
+    const rate = props.turnCacheRate
+    if (typeof rate !== "number" || !(rate >= 0)) return ""
+    return i18n.t("ui.message.cacheRate", { rate: Math.round(rate * 100).toString() })
+  })
+  const streaming = () => props.message.time.completed === undefined
+  const isLastText = createMemo(() => {
+    let ordinal = 0
+    let last: string | undefined
+    for (const content of props.message.content) {
+      if (content.type !== "text" || !content.text.trim()) continue
+      last = `${props.message.id}:text:${ordinal++}`
+    }
+    return last === props.id
+  })
   const meta = createMemo(() => {
     const agent = props.message.agent
     return [
       agent ? agent[0]?.toUpperCase() + agent.slice(1) : "",
       model(),
       duration(),
+      tokens(),
+      cacheRate(),
       interrupted() ? i18n.t("ui.message.interrupted") : "",
     ]
       .filter(Boolean)
@@ -545,11 +579,13 @@ export function AssistantTextContent(props: {
               onClick={copy}
               aria-label={copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse")}
             />
-            <Show when={meta()}>
-              <span data-slot="text-part-meta" class="text-12-regular text-text-weak cursor-default">
-                {meta()}
-              </span>
-            </Show>
+          </div>
+        </Show>
+        <Show when={meta() && (props.showCopy || (streaming() && isLastText()))}>
+          <div data-slot="text-part-meta-wrapper">
+            <span data-slot="text-part-meta" class="text-12-regular text-text-weak cursor-default">
+              {meta()}
+            </span>
           </div>
         </Show>
       </div>

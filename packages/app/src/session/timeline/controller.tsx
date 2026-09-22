@@ -123,6 +123,10 @@ export function createTimelineController(input: { session: TimelineSessionSource
         : "compact"
   const shellToolPartsExpanded = () => timelineDetail().shell.details === "expanded"
   const editToolPartsExpanded = () => timelineDetail().edit.details === "expanded"
+  const collapseCompletedTurns = settings.general.collapseCompletedTurns
+  const showTurnDuration = settings.general.showTurnDuration
+  const showTurnTokens = settings.general.showTurnTokens
+  const showTurnCacheRate = settings.general.showTurnCacheRate
   const projection = createTimelineProjection({
     sessionMessages: projectedMessages,
     status: input.session.data.status,
@@ -262,6 +266,10 @@ export function createTimelineController(input: { session: TimelineSessionSource
       reasoningMode,
       shellToolPartsExpanded,
       editToolPartsExpanded,
+      collapseCompletedTurns,
+      showTurnDuration,
+      showTurnTokens,
+      showTurnCacheRate,
     },
     pending: {
       rename: () => pending.rename,

@@ -6,7 +6,7 @@ import type {
 } from "@opencode/client/promise"
 import { useI18n } from "@opencode/ui/context/i18n"
 import { Tooltip } from "@opencode/ui/tooltip"
-import { For, Show, createMemo, type Accessor, type JSX } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, type Accessor, type JSX } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import type { SessionUserActions, SessionUserAttachmentReference, SessionUserComment } from "../actions"
 import { useData } from "../context"
@@ -54,6 +54,10 @@ export function createSessionTimelineRowRenderer(input: {
   shellToolDefaultOpen: Accessor<boolean>
   editToolDefaultOpen: Accessor<boolean>
   timelineDetail?: Accessor<TimelineDetail>
+  collapseCompletedTurns?: Accessor<boolean>
+  showTurnDuration?: Accessor<boolean>
+  showTurnTokens?: Accessor<boolean>
+  showTurnCacheRate?: Accessor<boolean>
   disclosure: {
     value: (key: string) => boolean | undefined
     set: (key: string, open: boolean) => void
@@ -92,7 +96,26 @@ export function createSessionTimelineRowRenderer(input: {
   })
   const workingTurn = (messageID: string) =>
     input.status().type !== "idle" && input.projection.activeMessageID() === messageID
+  const showTurnDuration = () => input.showTurnDuration?.() ?? true
+  const [liveNow, setLiveNow] = createSignal(Date.now())
+  let liveTimer: ReturnType<typeof setInterval> | undefined
+  createEffect(() => {
+    const busy = input.projection.rows().some((row) => "userMessageID" in row && workingTurn(row.userMessageID))
+    if (!busy || !showTurnDuration()) {
+      if (liveTimer !== undefined) {
+        clearInterval(liveTimer)
+        liveTimer = undefined
+      }
+      return
+    }
+    if (liveTimer !== undefined) return
+    liveTimer = setInterval(() => setLiveNow(Date.now()), 1000)
+  })
+  onCleanup(() => {
+    if (liveTimer !== undefined) clearInterval(liveTimer)
+  })
   const duration = (messageID: string) => {
+    if (!showTurnDuration()) return null
     const user = input.projection.messageByID().get(messageID)
     if (user?.type !== "user") return null
     const completed = (input.projection.assistantMessagesByParent().get(messageID) ?? emptyAssistantMessages).reduce<
@@ -101,8 +124,38 @@ export function createSessionTimelineRowRenderer(input: {
       if (message.time.completed === undefined) return latest
       return latest === undefined ? message.time.completed : Math.max(latest, message.time.completed)
     }, undefined)
-    if (completed === undefined || completed < user.time.created) return undefined
-    return completed - user.time.created
+    if (completed !== undefined) {
+      if (completed < user.time.created) return undefined
+      return completed - user.time.created
+    }
+    if (!workingTurn(messageID)) return undefined
+    return Math.max(0, liveNow() - user.time.created)
+  }
+  const turnTokens = (messageID: string) => {
+    if (!((input.showTurnTokens?.() ?? true) || (input.showTurnCacheRate?.() ?? true))) return undefined
+    const messages = input.projection.assistantMessagesByParent().get(messageID) ?? emptyAssistantMessages
+    const total = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
+    let found = false
+    for (const message of messages) {
+      const tokens = message.tokens
+      if (!tokens) continue
+      found = true
+      total.input += tokens.input
+      total.output += tokens.output
+      total.reasoning += tokens.reasoning
+      total.cache.read += tokens.cache.read
+      total.cache.write += tokens.cache.write
+    }
+    if (!found) return undefined
+    return total
+  }
+  const turnCacheRate = (messageID: string) => {
+    if (!(input.showTurnCacheRate?.() ?? true)) return undefined
+    const tokens = turnTokens(messageID)
+    if (!tokens) return undefined
+    const denominator = tokens.input + tokens.cache.read
+    if (!(denominator > 0)) return undefined
+    return tokens.cache.read / denominator
   }
   const copyContentID = (messageID: string) => {
     if (workingTurn(messageID)) return null
@@ -193,7 +246,9 @@ export function createSessionTimelineRowRenderer(input: {
           }
           reasoningOpen={(id) => input.disclosure.value(id)}
           onReasoningOpenChange={(id, open) => input.disclosure.set(id, open)}
-          toolDefaultOpen={(tool) => (input.timelineDetail ? contentDefaultOpen(tool) : false)}
+          toolDefaultOpen={(tool) =>
+            input.timelineDetail ? contentDefaultOpen(tool, row().userMessageID) : false
+          }
           toolOpen={(id) => input.disclosure.value(`${row().group.key}:tool:${id}`)}
           onToolOpenChange={(id, open) => input.disclosure.set(`${row().group.key}:tool:${id}`, open)}
           fileOpen={(path) =>
@@ -262,7 +317,7 @@ export function createSessionTimelineRowRenderer(input: {
     })
     const defaultOpen = createMemo(() => {
       const item = content()
-      return item ? contentDefaultOpen(item) : undefined
+      return item ? contentDefaultOpen(item, row().userMessageID) : undefined
     })
     const disclosureKey = () => (content()?.type === "reasoning" ? ref()!.partID : row().group.key)
     return (
@@ -276,6 +331,8 @@ export function createSessionTimelineRowRenderer(input: {
                 contentID={ref()!.partID}
                 showAssistantCopyPartID={copyContentID(row().userMessageID)}
                 turnDurationMs={duration(row().userMessageID)}
+                turnTokens={(input.showTurnTokens?.() ?? true) ? turnTokens(row().userMessageID) : undefined}
+                turnCacheRate={turnCacheRate(row().userMessageID)}
                 defaultOpen={defaultOpen()}
                 toolOpen={input.disclosure.value(disclosureKey()) ?? defaultOpen()}
                 onToolOpenChange={(open) => input.disclosure.set(disclosureKey(), open)}
@@ -288,7 +345,13 @@ export function createSessionTimelineRowRenderer(input: {
     )
   }
 
-  function contentDefaultOpen(item: SessionMessageAssistant["content"][number]) {
+  function contentDefaultOpen(item: SessionMessageAssistant["content"][number], userMessageID?: string) {
+    if (
+      userMessageID !== undefined &&
+      (input.collapseCompletedTurns?.() ?? false) &&
+      !workingTurn(userMessageID)
+    )
+      return false
     if (input.timelineDetail) {
       const category = timelineCategory(item)
       if (

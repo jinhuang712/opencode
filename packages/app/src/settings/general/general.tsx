@@ -486,6 +486,50 @@ export const SettingsGeneral: Component = () => {
                 onChange={settings.general.setTimelineDetail}
               />
             </div>
+            <SettingsRow
+              title={language.t("settings.general.row.collapseCompletedTurns.title")}
+              description={language.t("settings.general.row.collapseCompletedTurns.description")}
+            >
+              <div data-action="settings-collapse-completed-turns">
+                <Switch
+                  checked={settings.general.collapseCompletedTurns()}
+                  onChange={(checked) => settings.general.setCollapseCompletedTurns(checked)}
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow
+              title={language.t("settings.general.row.showTurnDuration.title")}
+              description={language.t("settings.general.row.showTurnDuration.description")}
+            >
+              <div data-action="settings-show-turn-duration">
+                <Switch
+                  checked={settings.general.showTurnDuration()}
+                  onChange={(checked) => settings.general.setShowTurnDuration(checked)}
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow
+              title={language.t("settings.general.row.showTurnTokens.title")}
+              description={language.t("settings.general.row.showTurnTokens.description")}
+            >
+              <div data-action="settings-show-turn-tokens">
+                <Switch
+                  checked={settings.general.showTurnTokens()}
+                  onChange={(checked) => settings.general.setShowTurnTokens(checked)}
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow
+              title={language.t("settings.general.row.showTurnCacheRate.title")}
+              description={language.t("settings.general.row.showTurnCacheRate.description")}
+            >
+              <div data-action="settings-show-turn-cache-rate">
+                <Switch
+                  checked={settings.general.showTurnCacheRate()}
+                  onChange={(checked) => settings.general.setShowTurnCacheRate(checked)}
+                />
+              </div>
+            </SettingsRow>
           </SettingsList>
         </section>
 

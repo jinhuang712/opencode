@@ -90,6 +90,10 @@ const generalSchema = Persistence.struct({
     tools: placementOnlySchema,
   }),
   showCustomAgents: Schema.Boolean,
+  collapseCompletedTurns: Schema.Boolean,
+  showTurnDuration: Schema.Boolean,
+  showTurnTokens: Schema.Boolean,
+  showTurnCacheRate: Schema.Boolean,
   mobileTitlebarPosition: Schema.Literals(["top", "bottom"]),
   mobileDiffWrap: Schema.Boolean,
   terminalPlacement: Schema.Literals(["side", "bottom"]),
@@ -247,6 +251,10 @@ export const defaultSettings: Settings = {
     showTerminal: false,
     timelineDetail: { ...timelinePresets[2].value },
     showCustomAgents: false,
+    collapseCompletedTurns: true,
+    showTurnDuration: true,
+    showTurnTokens: true,
+    showTurnCacheRate: true,
     mobileTitlebarPosition: "top",
     mobileDiffWrap: true,
     terminalPlacement: "side",
@@ -336,6 +344,34 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         showCustomAgents,
         setShowCustomAgents(value: boolean) {
           setStore("general", "showCustomAgents", value)
+        },
+        collapseCompletedTurns: withFallback(
+          () => store.general?.collapseCompletedTurns,
+          defaultSettings.general.collapseCompletedTurns,
+        ),
+        setCollapseCompletedTurns(value: boolean) {
+          setStore("general", "collapseCompletedTurns", value)
+        },
+        showTurnDuration: withFallback(
+          () => store.general?.showTurnDuration,
+          defaultSettings.general.showTurnDuration,
+        ),
+        setShowTurnDuration(value: boolean) {
+          setStore("general", "showTurnDuration", value)
+        },
+        showTurnTokens: withFallback(
+          () => store.general?.showTurnTokens,
+          defaultSettings.general.showTurnTokens,
+        ),
+        setShowTurnTokens(value: boolean) {
+          setStore("general", "showTurnTokens", value)
+        },
+        showTurnCacheRate: withFallback(
+          () => store.general?.showTurnCacheRate,
+          defaultSettings.general.showTurnCacheRate,
+        ),
+        setShowTurnCacheRate(value: boolean) {
+          setStore("general", "showTurnCacheRate", value)
         },
         mobileTitlebarPosition: withFallback(
           () => store.general?.mobileTitlebarPosition,

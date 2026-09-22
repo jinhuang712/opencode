@@ -1172,6 +1172,15 @@ export const dict = {
   "settings.timeline.category.subagents": "Subagents",
   "settings.timeline.category.notices": "Notices",
   "settings.timeline.category.tools": "Other tools",
+  "settings.general.row.collapseCompletedTurns.title": "Collapse completed turns",
+  "settings.general.row.collapseCompletedTurns.description":
+    "Collapse tool activity for finished turns. The active turn stays expanded.",
+  "settings.general.row.showTurnDuration.title": "Show turn duration",
+  "settings.general.row.showTurnDuration.description": "Show elapsed time in the turn footer",
+  "settings.general.row.showTurnTokens.title": "Show turn token usage",
+  "settings.general.row.showTurnTokens.description": "Show total tokens used in the turn footer",
+  "settings.general.row.showTurnCacheRate.title": "Show turn cache hit rate",
+  "settings.general.row.showTurnCacheRate.description": "Show prompt cache hit rate in the turn footer",
 
   "settings.general.row.language.title": "Language",
   "settings.general.row.language.description": "Change the display language for OpenCode",

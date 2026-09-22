@@ -244,6 +244,8 @@ const source = {
   "ui.message.duration.minutesSeconds": "{{minutes}}m {{seconds}}s",
   "ui.message.tokens": "{{count}} tokens",
   "ui.message.cacheRate": "cache {{rate}}%",
+  "ui.message.turnSummary": "Worked for {{duration}}",
+  "ui.message.showDetails": "Show details",
   "ui.message.interrupted": "Interrupted",
   "ui.sessionTimeline.notice.model": "Model",
   "ui.sessionTimeline.notice.modelSwitched": "Switched to {{model}}",

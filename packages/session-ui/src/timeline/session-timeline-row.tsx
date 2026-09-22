@@ -6,7 +6,7 @@ import type {
 } from "@opencode/client/promise"
 import { useI18n } from "@opencode/ui/context/i18n"
 import { Tooltip } from "@opencode/ui/tooltip"
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, type Accessor, type JSX } from "solid-js"
+import { For, Show, createMemo, type Accessor, type JSX } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import type { SessionUserActions, SessionUserAttachmentReference, SessionUserComment } from "../actions"
 import { useData } from "../context"
@@ -97,23 +97,6 @@ export function createSessionTimelineRowRenderer(input: {
   const workingTurn = (messageID: string) =>
     input.status().type !== "idle" && input.projection.activeMessageID() === messageID
   const showTurnDuration = () => input.showTurnDuration?.() ?? true
-  const [liveNow, setLiveNow] = createSignal(Date.now())
-  let liveTimer: ReturnType<typeof setInterval> | undefined
-  createEffect(() => {
-    const busy = input.projection.rows().some((row) => "userMessageID" in row && workingTurn(row.userMessageID))
-    if (!busy || !showTurnDuration()) {
-      if (liveTimer !== undefined) {
-        clearInterval(liveTimer)
-        liveTimer = undefined
-      }
-      return
-    }
-    if (liveTimer !== undefined) return
-    liveTimer = setInterval(() => setLiveNow(Date.now()), 1000)
-  })
-  onCleanup(() => {
-    if (liveTimer !== undefined) clearInterval(liveTimer)
-  })
   const duration = (messageID: string) => {
     if (!showTurnDuration()) return null
     const user = input.projection.messageByID().get(messageID)
@@ -128,8 +111,7 @@ export function createSessionTimelineRowRenderer(input: {
       if (completed < user.time.created) return undefined
       return completed - user.time.created
     }
-    if (!workingTurn(messageID)) return undefined
-    return Math.max(0, liveNow() - user.time.created)
+    return undefined
   }
   const turnTokens = (messageID: string) => {
     if (!((input.showTurnTokens?.() ?? true) || (input.showTurnCacheRate?.() ?? true))) return undefined
@@ -255,7 +237,7 @@ export function createSessionTimelineRowRenderer(input: {
             input.disclosure.value(`patch:${path}`) ?? input.timelineDetail?.().edit.details === "expanded"
           }
           onFileOpenChange={(path, open) => input.disclosure.set(`patch:${path}`, open)}
-          open={input.disclosure.value(key()) === true}
+          open={input.disclosure.value(key()) === true || turnExpanded(row().userMessageID)}
           busy={
             workingTurn(row().userMessageID) &&
             input.projection.lastAssistantGroupKey().get(row().userMessageID) === row().group.key
@@ -348,6 +330,7 @@ export function createSessionTimelineRowRenderer(input: {
   function contentDefaultOpen(item: SessionMessageAssistant["content"][number], userMessageID?: string) {
     if (
       userMessageID !== undefined &&
+      !turnExpanded(userMessageID) &&
       (input.collapseCompletedTurns?.() ?? false) &&
       !workingTurn(userMessageID)
     )
@@ -634,6 +617,98 @@ export function createSessionTimelineRowRenderer(input: {
     )
   }
 
+  const turnExpanded = (userMessageID: string) => input.disclosure.value(`turn:${userMessageID}:expanded`) === true
+
+  const assistantContent = (messageID: string, partID: string) => {
+    const message = input.projection.messageByID().get(messageID)
+    return message?.type === "assistant" ? Timeline.resolveContent(message, partID) : undefined
+  }
+
+  const toolFailed = (messageID: string, partID: string) => {
+    const content = assistantContent(messageID, partID)
+    return content?.type === "tool" && currentToolFailed(content)
+  }
+
+  const isCollapsibleRow = (row: TimelineRow.TimelineRow) => {
+    switch (row._tag) {
+      case "AssistantPart": {
+        if (row.group.type === "part") {
+          const content = assistantContent(row.group.ref.messageID, row.group.ref.partID)
+          if (!content || content.type === "text") return false
+          if (content.type !== "tool") return true
+          return !currentToolFailed(content)
+        }
+        return !row.group.refs.some((ref) => toolFailed(ref.messageID, ref.partID))
+      }
+      case "Thinking":
+      case "TurnDivider":
+        return true
+      case "Shell": {
+        const message = input.projection.messageByID().get(row.messageID)
+        if (message?.type !== "shell") return false
+        return !(message.status === "timeout" || (message.status === "exited" && message.exit !== undefined && message.exit !== 0))
+      }
+      default:
+        return false
+    }
+  }
+
+  const collapsedTurns = createMemo(() => {
+    const collapsed = new Map<string, string>()
+    if (!(input.collapseCompletedTurns?.() ?? false)) return collapsed
+    for (const row of input.projection.rows()) {
+      if (!("userMessageID" in row) || collapsed.has(row.userMessageID)) continue
+      if (workingTurn(row.userMessageID) || turnExpanded(row.userMessageID)) continue
+      if (isCollapsibleRow(row)) collapsed.set(row.userMessageID, TimelineRow.key(row))
+    }
+    return collapsed
+  })
+
+  const formatDuration = (ms: number) => {
+    const numfmt = new Intl.NumberFormat(i18n.locale())
+    const total = Math.round(ms / 1000)
+    if (total < 60) return i18n.t("ui.message.duration.seconds", { count: numfmt.format(total) })
+    return i18n.t("ui.message.duration.minutesSeconds", {
+      minutes: numfmt.format(Math.floor(total / 60)),
+      seconds: numfmt.format(total % 60),
+    })
+  }
+
+  function TurnSummary(props: { userMessageID: string }) {
+    const ms = () => {
+      const message = input.projection.messageByID().get(props.userMessageID)
+      if (message?.type !== "user") return undefined
+      const completed = (input.projection.assistantMessagesByParent().get(props.userMessageID) ?? emptyAssistantMessages).reduce<number | undefined>(
+        (latest, item) => {
+          if (item.time.completed === undefined) return latest
+          return latest === undefined ? item.time.completed : Math.max(latest, item.time.completed)
+        },
+        undefined,
+      )
+      if (completed === undefined || completed < message.time.created) return undefined
+      return completed - message.time.created
+    }
+    const label = () => {
+      const value = ms()
+      return value === undefined ? i18n.t("ui.message.showDetails") : i18n.t("ui.message.turnSummary", { duration: formatDuration(value) })
+    }
+    return (
+      <div data-slot="session-turn-message-container" class={`w-full ${padding()}`}>
+        <button
+          type="button"
+          data-slot="turn-summary"
+          data-turn={props.userMessageID}
+          aria-expanded={turnExpanded(props.userMessageID)}
+          onClick={() => input.disclosure.set(`turn:${props.userMessageID}:expanded`, !turnExpanded(props.userMessageID))}
+          class="flex w-full items-center gap-2 py-1 text-12-regular text-text-weak cursor-pointer bg-transparent border-none p-0 text-left"
+        >
+          <span>{label()}</span>
+          <span aria-hidden="true">{turnExpanded(props.userMessageID) ? "▾" : "▸"}</span>
+        </button>
+      </div>
+    )
+  }
+
   const render = (row: Accessor<TimelineRow.TimelineRow>, onSizeChange?: () => void) => {
     if (row()._tag === "TurnGap") return <div data-timeline-row="TurnGap" aria-hidden="true" class="h-6" />
     if (row()._tag === "UserMessage") {
@@ -809,9 +884,30 @@ export function createSessionTimelineRowRenderer(input: {
   }
 
   function Row(props: { row: Accessor<TimelineRow.TimelineRow>; onSizeChange?: () => void }) {
+    const decision = createMemo((): "show" | "summary" | "hide" => {
+      const value = props.row()
+      const collapseKey = collapsedTurns().get(value.userMessageID)
+      if (collapseKey === undefined) return "show"
+      if (TimelineRow.key(value) === collapseKey) return "summary"
+      return isCollapsibleRow(value) ? "hide" : "show"
+    })
     return (
       <Show when={TimelineRow.key(props.row())} keyed>
-        {(_key) => render(props.row, props.onSizeChange)}
+        {(_key) => (
+          <Show when={decision()} keyed>
+            {(mode) =>
+              mode === "summary" ? (
+                <Frame row={props.row() as FramedTimelineRow}>
+                  <TurnSummary userMessageID={props.row().userMessageID} />
+                </Frame>
+              ) : mode === "hide" ? (
+                <></>
+              ) : (
+                render(props.row, props.onSizeChange)
+              )
+            }
+          </Show>
+        )}
       </Show>
     )
   }

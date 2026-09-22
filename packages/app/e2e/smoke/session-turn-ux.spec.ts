@@ -120,6 +120,10 @@ test.describe("smoke: session turn ux", () => {
       )
     })
     await navigateToSession(page, fixture.targetID, fixture.expected.targetTitle)
+    await page.evaluate(() => document.fonts.ready)
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-component="markdown"]:not([data-markdown-ready])').length === 0,
+    )
 
     const jumpUp = page.getByRole("button", { name: "Jump to previous prompt" })
     const jumpDown = page.getByRole("button", { name: "Jump to next turn end" })
@@ -130,13 +134,18 @@ test.describe("smoke: session turn ux", () => {
     await expect(meta).toBeVisible()
     await expect(meta).toContainText("cache 0%")
 
-    const collapsedStates = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('[data-slot="collapsible-trigger"]')].map((element) =>
-        element.getAttribute("aria-expanded"),
-      ),
-    )
-    expect(collapsedStates.length).toBeGreaterThan(0)
-    expect(collapsedStates.every((state) => state === "false")).toBe(true)
+    await expect(page.locator('[data-slot="turn-summary"]').first()).toBeVisible()
+    await expect(page.locator('[data-slot="turn-summary"]').first()).toContainText("Worked for")
+    await expect(page.locator('[data-slot="accordion-trigger"]')).toHaveCount(0)
+    await expect(page.locator('[data-slot="context-tool-group-item"]')).toHaveCount(0)
+    await page.locator('[data-slot="turn-summary"]').first().click()
+    await expect
+      .poll(
+        async () =>
+          page.locator('[data-slot="accordion-trigger"], [data-slot="context-tool-group-item"]').count(),
+        { timeout: 10_000 },
+      )
+      .toBeGreaterThan(0)
 
     await expectNoSmokeErrors(errors, [], [])
   })

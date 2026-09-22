@@ -499,23 +499,33 @@ export function AssistantTextContent(props: {
     const match = data.store.provider?.all?.get(props.message.model.providerID)
     return match?.models?.[props.message.model.id]?.name ?? props.message.model.id
   })
-  const duration = createMemo(() => {
-    const completed = props.message.time.completed
-    const ms =
-      props.turnDurationMs === null
-        ? -1
-        : typeof props.turnDurationMs === "number"
-          ? props.turnDurationMs
-          : typeof completed === "number"
-            ? completed - props.message.time.created
-            : -1
-    if (!(ms >= 0)) return ""
+  const formatMs = (ms: number) => {
     const total = Math.round(ms / 1000)
     if (total < 60) return i18n.t("ui.message.duration.seconds", { count: numfmt().format(total) })
     return i18n.t("ui.message.duration.minutesSeconds", {
       minutes: numfmt().format(Math.floor(total / 60)),
       seconds: numfmt().format(total % 60),
     })
+  }
+  const streaming = () => props.message.time.completed === undefined
+  const [now, setNow] = createSignal(Date.now())
+  createEffect(() => {
+    if (!streaming()) return
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    onCleanup(() => clearInterval(timer))
+  })
+  const duration = createMemo(() => {
+    if (props.turnDurationMs === null) return ""
+    if (streaming()) return formatMs(Math.max(0, now() - props.message.time.created))
+    const completed = props.message.time.completed
+    const ms =
+      typeof props.turnDurationMs === "number"
+        ? props.turnDurationMs
+        : typeof completed === "number"
+          ? completed - props.message.time.created
+          : -1
+    if (!(ms >= 0)) return ""
+    return formatMs(ms)
   })
   const tokens = createMemo(() => {
     const usage = props.turnTokens
@@ -530,7 +540,6 @@ export function AssistantTextContent(props: {
     if (typeof rate !== "number" || !(rate >= 0)) return ""
     return i18n.t("ui.message.cacheRate", { rate: Math.round(rate * 100).toString() })
   })
-  const streaming = () => props.message.time.completed === undefined
   const isLastText = createMemo(() => {
     let ordinal = 0
     let last: string | undefined

@@ -186,6 +186,7 @@ function MessageTimelineView(
   const showHeader = createMemo(() => !props.hideHeader && (props.data.showHeader() || workspaceSession()))
   const pinned = createMemo(() => props.pinned)
   const messageByID = projection.messageByID
+  const promptIDs = createMemo(() => [...projection.messageRowIndex().keys()])
   const virtualized = createTimelineVirtualizer({
     active: () => props.active !== false,
     sessionKey: () => `${server.key}/${props.data.sessionID()}`,
@@ -238,6 +239,7 @@ function MessageTimelineView(
     },
     setRevealMessage: props.setRevealMessage,
     setScrollToEnd: props.setScrollToEnd,
+    promptIDs,
   })
   const VirtualizedTimeline = virtualized.View
   const [title, setTitle] = createStore({

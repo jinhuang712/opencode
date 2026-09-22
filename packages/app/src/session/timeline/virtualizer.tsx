@@ -73,6 +73,7 @@ type Input = {
   ) => boolean
   setRevealMessage?: (fn: (id: string, partID?: string) => void) => void
   setScrollToEnd?: (fn: () => void) => void
+  promptIDs: Accessor<string[]>
 }
 
 type ViewProps = {
@@ -564,6 +565,7 @@ export function createTimelineVirtualizer(input: Input) {
     const previousMaxScroll = maxScroll
     scrollTop = root.scrollTop
     maxScroll = root.scrollHeight - root.clientHeight
+    syncScrollEdge()
     const atEnd = maxScroll - scrollTop <= endEpsilon
     const arrived = scrollTop > previousTop + endEpsilon || maxScroll < previousMaxScroll
     if (maxScroll <= 1 || (atEnd && arrived)) input.onPin()
@@ -572,6 +574,55 @@ export function createTimelineVirtualizer(input: Input) {
     input.onScheduleScrollState(root)
     input.onHistoryScroll()
   }
+
+  const [scrollEdge, setScrollEdge] = createSignal({ top: true, bottom: false })
+  const syncScrollEdge = () => {
+    const root = listRoot()
+    if (!root) return
+    setScrollEdge({
+      top: root.scrollTop <= 4,
+      bottom: root.scrollHeight - root.scrollTop - root.clientHeight <= 80,
+    })
+  }
+  createEffect(() => {
+    rows().length
+    queueMicrotask(() => syncScrollEdge())
+  })
+
+  const jumpUp = () => {
+    const ids = input.promptIDs()
+    if (ids.length === 0) return
+    const start = virtualizer.range?.startIndex ?? 0
+    for (let index = ids.length - 1; index >= 0; index--) {
+      const rowIndex = input.projection.messageRowIndex().get(ids[index]!)
+      if (rowIndex !== undefined && rowIndex < start) {
+        input.onUnpin()
+        input.onUserScroll()
+        virtualizer.scrollToIndex(rowIndex, { align: "start" })
+        return
+      }
+    }
+  }
+  const jumpDown = () => {
+    const ids = input.promptIDs()
+    if (ids.length === 0) return
+    const end = virtualizer.range?.endIndex ?? 0
+    for (let index = 0; index < ids.length; index++) {
+      const last = input.projection.messageLastRowIndex().get(ids[index]!)
+      if (last !== undefined && last > end) {
+        if (index === ids.length - 1) input.onResumeScroll()
+        else {
+          input.onUnpin()
+          input.onUserScroll()
+        }
+        virtualizer.scrollToIndex(last, { align: "end" })
+        return
+      }
+    }
+    input.onResumeScroll()
+  }
+  const jumpUpDisabled = () => input.promptIDs().length === 0 || scrollEdge().top
+  const jumpDownDisabled = () => input.promptIDs().length === 0 || scrollEdge().bottom
 
   function View(props: ViewProps) {
     function VirtualRow(rowProps: { rowKey: string }) {
@@ -668,6 +719,38 @@ export function createTimelineVirtualizer(input: Input) {
                 stroke="currentColor"
                 stroke-linecap="square"
               />
+            </svg>
+          </button>
+        </div>
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 z-[60] flex flex-col gap-2">
+          <button
+            type="button"
+            aria-label={language.t("session.messages.jumpToPreviousPrompt")}
+            class="pointer-events-auto flex items-center justify-center w-8 h-7 px-2 py-1.5 rounded-lg border-none cursor-pointer text-v2-text-text-base backdrop-blur-[2px] disabled:opacity-40 disabled:cursor-default"
+            style={{
+              background: "color-mix(in srgb, var(--v2-background-bg-base) 92%, transparent)",
+              "box-shadow": "var(--v2-elevation-raised), 0px 2px 8px var(--v2-background-bg-base)",
+            }}
+            disabled={jumpUpDisabled()}
+            onClick={jumpUp}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3.66667 7.33335L8 3L12.3333 7.33335" stroke="currentColor" stroke-linecap="square" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            aria-label={language.t("session.messages.jumpToNextTurnEnd")}
+            class="pointer-events-auto flex items-center justify-center w-8 h-7 px-2 py-1.5 rounded-lg border-none cursor-pointer text-v2-text-text-base backdrop-blur-[2px] disabled:opacity-40 disabled:cursor-default"
+            style={{
+              background: "color-mix(in srgb, var(--v2-background-bg-base) 92%, transparent)",
+              "box-shadow": "var(--v2-elevation-raised), 0px 2px 8px var(--v2-background-bg-base)",
+            }}
+            disabled={jumpDownDisabled()}
+            onClick={jumpDown}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3.66667 8.66665L8 13L12.3333 8.66665" stroke="currentColor" stroke-linecap="square" />
             </svg>
           </button>
         </div>

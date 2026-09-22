@@ -819,6 +819,8 @@ export const dict = {
   "session.messages.loadEarlier": "Load earlier messages",
   "session.messages.loading": "Loading messages…",
   "session.messages.jumpToLatest": "Jump to latest",
+  "session.messages.jumpToPreviousPrompt": "Jump to previous prompt",
+  "session.messages.jumpToNextTurnEnd": "Jump to next turn end",
 
   "session.context.addToContext": "Add {{selection}} to context",
   "session.todo.title": "Todos",

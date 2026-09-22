@@ -56,6 +56,7 @@ export function mountTimelineVirtualizer(input: { count: number; rowHeight: numb
       onUserScroll: () => {},
       onHistoryScroll: () => {},
       canRenderImmediately: () => input.immediate ?? false,
+      promptIDs: () => rows.map((row) => row.userMessageID),
     })
 
     const resize = new ResizeObserver((entries) => {
